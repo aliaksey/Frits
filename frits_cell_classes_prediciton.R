@@ -152,11 +152,10 @@ plot(hclustres.dend)
 ###############start catting
 clstrs<-as.data.frame(cbind(Cluster=cutree(hclustres.dend,k=clust.numb,
                                            order_clusters_as_data =F,
-                                           sort_cluster_numbers = T),FeatureIdx=rownames(as.matrix(cutree(hclustres.dend,k=clust.numb,
-              order_clusters_as_data =F,
-              sort_cluster_numbers = T),FeatureIdx=rownames(as.matrix(cutree(hclustres.dend,k=clust.numb,
-                                                                             order_clusters_as_data =F,
-                                                                             sort_cluster_numbers = F)))))
+                                           sort_cluster_numbers = T),
+                            FeatureIdx=rownames(as.matrix(cutree(hclustres.dend,k=clust.numb,
+                                         order_clusters_as_data =F,
+                                         sort_cluster_numbers = F)))))
 
 #clstrs<-cutree(hclustres,k=clust.numb)
 ##merge clusters with cell shape data
@@ -256,16 +255,16 @@ multiClassSummary <- cmpfun(function (data, lev = NULL, model = NULL){
 cvCtrl <- trainControl(method = "repeatedcv", repeats = 10,
                        classProbs = TRUE,savePred=T,returnResamp="final")#,
 #                        summaryFunction = multiClassSummary)
-cl <- makeCluster(detectCores(), type='PSOCK')
-registerDoParallel(cl)
+# cl <- makeCluster(detectCores(), type='PSOCK')
+# registerDoParallel(cl)
 
 #rpart
 rpartTune <- train(Cluster ~ ., data = forTraining, method = "rpart",
                    tuneLength = 10,
                    metric = 'Accuracy',
                    trControl = cvCtrl)
-stopCluster(cl)
-registerDoSEQ()
+# stopCluster(cl)
+# registerDoSEQ()
 # for(stat in c('Accuracy', 'Kappa', 'AccuracyLower', 'AccuracyUpper', 'AccuracyPValue', 
 #               'Sensitivity', 'Specificity', 'Pos_Pred_Value', 
 #               'Neg_Pred_Value', 'Detection_Rate', 'ROC', 'logLoss')) {
@@ -287,15 +286,15 @@ confusionMatrix(rpartPred2, forTesting$Cluster)
 table(forTraining$Cluster)
 table(forTesting$Cluster)
 ##knn
-cl <- makeCluster(detectCores(), type='PSOCK')
-registerDoParallel(cl)
+# cl <- makeCluster(detectCores(), type='PSOCK')
+# registerDoParallel(cl)
 
 knnTune <- train(Cluster ~ ., data = forTraining, method = "knn",
                    tuneLength = 10,
                    metric = 'Accuracy',
                    trControl = cvCtrl)
-stopCluster(cl)
-registerDoSEQ()
+# stopCluster(cl)
+# registerDoSEQ()
 # for(stat in c('Accuracy', 'Kappa', 'AccuracyLower', 'AccuracyUpper', 'AccuracyPValue', 
 #               'Sensitivity', 'Specificity', 'Pos_Pred_Value', 
 #               'Neg_Pred_Value', 'Detection_Rate', 'ROC', 'logLoss')) {
@@ -335,7 +334,7 @@ registerDoSEQ()
 
 plot(svmTune)
 predictors(svmTune)
-plot(varImp(svmTune),top=5,cex=4,pch=16,
+plot(varImp(svmTune),top=10,cex=4,pch=16,
      main="Feature importance for CART method")
 varImp_re<-varImp(svmTune)
 row.names(varImp_re$importance)[varImp_re$importance>0]
@@ -461,7 +460,7 @@ confusionMatrix(qdaPred, forTesting$Cluster)
 #################checking regression model does it works better
 #alp_model_f.sss.t
 ##selecting feature to use as predictor
-selected_variable<-"Cells_AreaShape_Solidity"
+selected_variable<-"Cells_AreaShape_Eccentricity"
 alp.model.cell.regr.t<-merge(alp_model[,-c(2:6)],alp_model_f.sss.t[,
            c("feature.idx",selected_variable)],by="feature.idx",sort=F)
 colnames(alp.model.cell.regr.t)[colnames(alp.model.cell.regr.t)==selected_variable]<-
@@ -505,7 +504,7 @@ plot(rpart1a4, main="anova with CART for Alp integrated intensity,Pruned")
 
 # rpartPred <- predict(rpart_training3, forTesting)
 # summary(rpartPred)
-______________________________________________________________________________________ 
+#______________________________________________________________________________________ 
 ##tunning the model
 cvCtrl <- trainControl(method = "repeatedcv", repeats = 10,
                        summaryFunction = defaultSummary,
