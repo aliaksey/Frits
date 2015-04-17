@@ -66,6 +66,11 @@ alp_model_f.ss<-alp_model_f.s
 ##find most severe outliers (boxplot rule)
 #alp_model_f.sso<-c()
 #library(plyr)
+library(doParallel)
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
+
+
 rm(list=c("rslt","rsltbb","rslta"))
 for(i in unique(alp_model_f.ss[,"feature.idx"])){
   temp<-alp_model_f.ss[alp_model_f.ss$feature.idx==i,]
@@ -86,6 +91,8 @@ for(i in unique(alp_model_f.ss[,"feature.idx"])){
   if(!exists("rslt"))rslt<-rsltbb else rslt<-rbind(rsltbb, rslt)
   if(f==(length(temp)-1)) rm("rsltbb")
 }
+stopCluster(cl)
+registerDoSEQ()
 save(rslt,file="result of outliers elemination.RDATA")
 
 alp_model_f.sso<-merge(alp_model_f.ss[,c(1:3,length(alp_model_f.ss))],rslt,by="ImageNumber") 
@@ -146,7 +153,11 @@ plot(hclustres.dend)
 clstrs<-as.data.frame(cbind(Cluster=cutree(hclustres.dend,k=clust.numb,
                                            order_clusters_as_data =F,
                                            sort_cluster_numbers = T),FeatureIdx=rownames(as.matrix(cutree(hclustres.dend,k=clust.numb,
-                                                                                                          order_clusters_as_data =F,
+              order_clusters_as_data =F,
+              sort_cluster_numbers = T),FeatureIdx=rownames(as.matrix(cutree(hclustres.dend,k=clust.numb,
+                                                                             order_clusters_as_data =F,
+                                                                             sort_cluster_numbers = F)))))
+
 #clstrs<-cutree(hclustres,k=clust.numb)
 ##merge clusters with cell shape data
 alp.model.cell.clust.t<-merge(alp_model[,-c(2:6)],clstrs,by.y="FeatureIdx",by.x="feature.idx",sort=F)
@@ -241,14 +252,20 @@ multiClassSummary <- cmpfun(function (data, lev = NULL, model = NULL){
 })
 
 ##tunning the model
+
 cvCtrl <- trainControl(method = "repeatedcv", repeats = 10,
                        classProbs = TRUE,savePred=T,returnResamp="final")#,
 #                        summaryFunction = multiClassSummary)
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
+
 #rpart
 rpartTune <- train(Cluster ~ ., data = forTraining, method = "rpart",
                    tuneLength = 10,
                    metric = 'Accuracy',
                    trControl = cvCtrl)
+stopCluster(cl)
+registerDoSEQ()
 # for(stat in c('Accuracy', 'Kappa', 'AccuracyLower', 'AccuracyUpper', 'AccuracyPValue', 
 #               'Sensitivity', 'Specificity', 'Pos_Pred_Value', 
 #               'Neg_Pred_Value', 'Detection_Rate', 'ROC', 'logLoss')) {
@@ -270,10 +287,15 @@ confusionMatrix(rpartPred2, forTesting$Cluster)
 table(forTraining$Cluster)
 table(forTesting$Cluster)
 ##knn
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
+
 knnTune <- train(Cluster ~ ., data = forTraining, method = "knn",
                    tuneLength = 10,
                    metric = 'Accuracy',
                    trControl = cvCtrl)
+stopCluster(cl)
+registerDoSEQ()
 # for(stat in c('Accuracy', 'Kappa', 'AccuracyLower', 'AccuracyUpper', 'AccuracyPValue', 
 #               'Sensitivity', 'Specificity', 'Pos_Pred_Value', 
 #               'Neg_Pred_Value', 'Detection_Rate', 'ROC', 'logLoss')) {
@@ -324,6 +346,9 @@ svmPred2 <- predict(svmTune, forTesting)
 confusionMatrix(svmPred2, forTesting$Cluster)
 
 ##logit
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
+
 logitTune <- train(x = forTrainingX,
                    y = forTraining$Cluster,
                    method = "glm",
@@ -331,6 +356,8 @@ logitTune <- train(x = forTrainingX,
                    family = binomial(link = "logit"),
                    metric = 'Accuracy',
                    trControl = cvCtrl)
+stopCluster(cl)
+registerDoSEQ()
 summary(logitTune)
 
 #predictors(logitTune)
@@ -341,12 +368,17 @@ logitPred <- predict(logitTune, forTesting[, names(forTesting) != "Cluster"])
 confusionMatrix(logitPred, forTesting$Cluster)
 
 ##nb
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
 nbTune <- train(x = forTrainingX,
                 y = forTraining$Cluster,
                 method = "nb",
                 tuneLength = 10,
                 metric = 'Accuracy',
                 trControl = cvCtrl)
+
+stopCluster(cl)
+registerDoSEQ()
 summary(nbTune)
 
 predictors(nbTune)
@@ -357,6 +389,8 @@ nbPred <- predict(nbTune, forTesting[, names(forTesting) != "Cluster"])
 confusionMatrix(nbPred, forTesting$Cluster)
 
 ##rf
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
 rfTune <- train(x = forTrainingX,
                 y = forTraining$Cluster,
                 method = "rf",
@@ -364,6 +398,9 @@ rfTune <- train(x = forTrainingX,
                 allowParallel=TRUE,
                 metric = 'Accuracy',
                 trControl = cvCtrl)
+
+stopCluster(cl)
+registerDoSEQ()
 
 summary(rfTune)
 
@@ -375,12 +412,17 @@ rfPred <- predict(rfTune, forTesting[, names(forTesting) != "Cluster"])
 confusionMatrix(rfPred, forTesting$Cluster)
 
 ##LDA
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
+
 ldaTune <- train(x = forTrainingX,
                  y = forTraining$Cluster,
                  method = "lda",
                  tuneLength = 10,
                  metric = 'Accuracy',
                  trControl = cvCtrl)
+stopCluster(cl)
+registerDoSEQ()
 summary(ldaTune)
 
 predictors(ldaTune)
@@ -391,12 +433,19 @@ ldaPred <- predict(ldaTune, forTesting[, names(forTesting) != "Cluster"])
 confusionMatrix(ldaPred, forTesting$Cluster)
 
 ##QDA
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
+
 qdaTune <- train(x = forTrainingX,
                  y = forTraining$Cluster,
                  method = "qda",
                  tuneLength = 10,
                  metric = 'Accuracy',
                  trControl = cvCtrl)
+
+
+stopCluster(cl)
+registerDoSEQ()
 summary(qdaTune)
 
 predictors(qdaTune)
@@ -461,11 +510,15 @@ ________________________________________________________________________________
 cvCtrl <- trainControl(method = "repeatedcv", repeats = 10,
                        summaryFunction = defaultSummary,
                        savePred=T,returnResamp="final")
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
 #rpart
 rpartTune <- train(Cell_Shape_Feature ~ ., data = forTraining, method = "rpart",
                    tuneLength = 10,
                    metric = "RMSE",
                    trControl = cvCtrl)
+stopCluster(cl)
+registerDoSEQ()
 plot(rpartTune)
 predictors(rpartTune)
 plot(varImp(rpartTune),top=5,cex=4,pch=16,
@@ -522,6 +575,8 @@ xyplot(Observed ~ Predicted, panel = function(x, y, ...) {
                 col.line = "blue", digits = 1,r.squared =TRUE)
 })
 ##RF
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
 rfTune <- train(x = forTrainingX,
                 y = forTraining$Cell_Shape_Feature,
                 method = "rf",
@@ -530,6 +585,8 @@ rfTune <- train(x = forTrainingX,
                 allowParallel=TRUE,
                 metric = "RMSE",
                 trControl = cvCtrl)
+stopCluster(cl)
+registerDoSEQ()
 summary(rfTune)
 
 
