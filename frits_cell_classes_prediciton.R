@@ -141,7 +141,7 @@ data.dist<-dist(to.dist.cl, method="euclidean")
 #performing clustering
 hclustres<-hclust(data.dist, method = "ward.D2")
 plot(hclustres)
-clust.numb<-4 ##specify number of clusters for selection
+clust.numb<-3 ##specify number of clusters for selection
 rect.hclust(hclustres,k=clust.numb)
 library(dendextend)
 hclustres.dend <- as.dendrogram(hclustres)
@@ -459,8 +459,10 @@ confusionMatrix(qdaPred, forTesting$Cluster)
 ############################################################################################
 #################checking regression model does it works better
 #alp_model_f.sss.t
+##try all variables
+for(ii in 2:length(alp_model_f.sss.t)){
 ##selecting feature to use as predictor
-selected_variable<-"Cells_AreaShape_FormFactor"
+selected_variable<-colnames(alp_model_f.sss.t)[ii]
 alp.model.cell.regr.t<-merge(alp_model[,-c(2:6)],alp_model_f.sss.t[,
            c("feature.idx",selected_variable)],by="feature.idx",sort=F)
 colnames(alp.model.cell.regr.t)[colnames(alp.model.cell.regr.t)==selected_variable]<-
@@ -612,3 +614,4 @@ xyplot(Observed ~ Predicted,
 ##compare 
 predTargets.c <- extractPrediction(list(svmTune,rpartTune,rfTune), forTesting)
 plotObsVsPred(predTargets.c)
+}
