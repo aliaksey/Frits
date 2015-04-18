@@ -110,7 +110,7 @@ alp_model_f.sso2.f<-ddply(alp_model_f.sso2,"feature.idx", numcolwise(median))
 alp_model_f.sss.t<-alp_model_f.sso2.f[,-c(2,3,5)]
 rownames(alp_model_f.sss.t)<-alp_model_f.sss.t$feature.idx
 alp_model_f.sss<-alp_model_f.sss.t[,-1]
-save(alp_model_f.sss,file="D:/Median cell shape features per surface.RDATA")
+save(alp_model_f.sss,file="Median cell shape features per surface.RDATA")
 ################create classyfication of cells
 #SCALING
 
@@ -135,12 +135,13 @@ plot(alp_model_f.sss.pca$sdev^2 / sum(alp_model_f.sss.pca$sdev^2))
 
 plot(alp_model_f.sss.pca$x[,1],alp_model_f.sss.pca$x[,2])
 #calsulate distance matrix
-to.dist.cl<-alp_model_f.sss.pca$x[,1:13]
+#to.dist.cl<-alp_model_f.sss.pca$x[,1:6]
+to.dist.cl<-alp_model_f.sss.scale
 data.dist<-dist(to.dist.cl, method="euclidean")
 #performing clustering
 hclustres<-hclust(data.dist, method = "ward.D2")
 plot(hclustres)
-clust.numb<-8 ##specify number of clusters for selection
+clust.numb<-4 ##specify number of clusters for selection
 rect.hclust(hclustres,k=clust.numb)
 library(dendextend)
 hclustres.dend <- as.dendrogram(hclustres)
@@ -163,8 +164,7 @@ alp.model.cell.clust.t<-merge(alp_model[,-c(2:6)],clstrs,by.y="FeatureIdx",by.x=
 rownames(alp.model.cell.clust.t)<-alp.model.cell.clust.t$feature.idx
 alp.model.cell.clust<-alp.model.cell.clust.t[,-1]
 alp.model.cell.clust$Cluster<-as.factor(alp.model.cell.clust$Cluster)
-levels(alp.model.cell.clust$Cluster)<-c("Cluster_1","Cluster_2","Cluster_3","Cluster_4","Cluster_5",
-            "Cluster_6","Cluster_7","Cluster_8")
+levels(alp.model.cell.clust$Cluster)<-paste("Cluster",levels(alp.model.cell.clust$Cluster), sep="_")
 summary(alp.model.cell.clust$Cluster)
 ##selecting samples for training and testing
 data_for_model<-alp.model.cell.clust
@@ -254,17 +254,17 @@ multiClassSummary <- cmpfun(function (data, lev = NULL, model = NULL){
 
 cvCtrl <- trainControl(method = "repeatedcv", repeats = 10,
                        classProbs = TRUE,savePred=T,returnResamp="final")#,
-#                        summaryFunction = multiClassSummary)
-# cl <- makeCluster(detectCores(), type='PSOCK')
-# registerDoParallel(cl)
+                      #  summaryFunction = multiClassSummary)
+ cl <- makeCluster(detectCores(), type='PSOCK')
+ registerDoParallel(cl)
 
 #rpart
 rpartTune <- train(Cluster ~ ., data = forTraining, method = "rpart",
                    tuneLength = 10,
                    metric = 'Accuracy',
                    trControl = cvCtrl)
-# stopCluster(cl)
-# registerDoSEQ()
+ stopCluster(cl)
+ registerDoSEQ()
 # for(stat in c('Accuracy', 'Kappa', 'AccuracyLower', 'AccuracyUpper', 'AccuracyPValue', 
 #               'Sensitivity', 'Specificity', 'Pos_Pred_Value', 
 #               'Neg_Pred_Value', 'Detection_Rate', 'ROC', 'logLoss')) {
@@ -286,15 +286,15 @@ confusionMatrix(rpartPred2, forTesting$Cluster)
 table(forTraining$Cluster)
 table(forTesting$Cluster)
 ##knn
-# cl <- makeCluster(detectCores(), type='PSOCK')
-# registerDoParallel(cl)
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
 
 knnTune <- train(Cluster ~ ., data = forTraining, method = "knn",
                    tuneLength = 10,
                    metric = 'Accuracy',
                    trControl = cvCtrl)
-# stopCluster(cl)
-# registerDoSEQ()
+stopCluster(cl)
+registerDoSEQ()
 # for(stat in c('Accuracy', 'Kappa', 'AccuracyLower', 'AccuracyUpper', 'AccuracyPValue', 
 #               'Sensitivity', 'Specificity', 'Pos_Pred_Value', 
 #               'Neg_Pred_Value', 'Detection_Rate', 'ROC', 'logLoss')) {
