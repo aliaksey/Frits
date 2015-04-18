@@ -18,23 +18,25 @@ load("data/ph_raw_data.RData")
 alp_model_morph.temp<-merge(alp_model,cell.ftrs,by.x="feature.idx",by.y="FeatureIdx")
 #Selecting features for anlaysis
 alp_model_morph<-alp_model_morph.temp[,c("feature.idx","median","ImageNumber","ObjectNumber",
-                                         colnames(alp_model_morph.temp)[grepl("Cells_AreaShape_",colnames(alp_model_morph.temp))&
-                                                                          !grepl("_Center_",colnames(alp_model_morph.temp))])]
+             colnames(alp_model_morph.temp)[grepl("Cells_AreaShape_",colnames(alp_model_morph.temp))&
+                                         !grepl("Zernike",colnames(alp_model_morph.temp))&
+                                           !grepl("Orientation",colnames(alp_model_morph.temp))&
+                                        !grepl("_Center_",colnames(alp_model_morph.temp))])]
 colnames(alp_model_morph)
 
-###get rid of highly correlated features
-corMatips <- cor(alp_model_morph[,-c(1:4)], method="spearman")
-corrplot(corMatips)
-
-hCorr <- findCorrelation(corMatips, 0.75)
-alp_model_f<-alp_model_morph[,!colnames(alp_model_morph)%in%colnames(corMatips[,hCorr])]
-
-alp_model_f<-alp_model_morph
-
-colnames(alp_model_f)
-
-corMatips.f <- cor(alp_model_f[,-c(1:4)],method="spearman")
-corrplot(corMatips.f)
+# ###get rid of highly correlated features
+# corMatips <- cor(alp_model_morph[,-c(1:4)], method="spearman")
+# corrplot(corMatips)
+# 
+# hCorr <- findCorrelation(corMatips, 0.75)
+# alp_model_f<-alp_model_morph[,!colnames(alp_model_morph)%in%colnames(corMatips[,hCorr])]
+# 
+# alp_model_f<-alp_model_morph
+# 
+# colnames(alp_model_f)
+# 
+# corMatips.f <- cor(alp_model_f[,-c(1:4)],method="spearman")
+# corrplot(corMatips.f)
 alp_model_f<-alp_model_morph
 
 ##rename rows
@@ -66,16 +68,16 @@ alp_model_f.ss<-alp_model_f.s
 ##find most severe outliers (boxplot rule)
 #alp_model_f.sso<-c()
 #library(plyr)
+rm(list=c("rslt","rsltbb","rslta"))
 library(doParallel)
+library(foreach)
 cl <- makeCluster(detectCores(), type='PSOCK')
 registerDoParallel(cl)
 
-
-rm(list=c("rslt","rsltbb","rslta"))
-for(i in unique(alp_model_f.ss[,"feature.idx"])){
+rslt<-foreach(i=unique(alp_model_f.ss[,"feature.idx"]), .combine='rbind') %dopar% {
   temp<-alp_model_f.ss[alp_model_f.ss$feature.idx==i,]
   ###filter based on all features cell number
-  for(f in c(5:(length(temp)-1))){
+  for(f in c(5:(length(temp)))){
     temp2<-temp[,c(3,4,f)]
     #temp2$CellIdx<-paste(temp2$ImageNumber,temp2$ObjectNumber,sep="_")
     lbnda<-as.numeric(quantile(temp2[,3], probs = 0.25))
@@ -84,19 +86,17 @@ for(i in unique(alp_model_f.ss[,"feature.idx"])){
     rslta<-temp2[temp2[,3]<(ubnda+1.5*iuda)&
                    temp2[,3]>(lbnda-1.5*iuda),]
     if (length(rslta[,1])==0) break
-    if(!exists("rsltbb"))rsltbb<-rslta else rsltbb<-merge(rslta, rsltbb, 
+    if(f==5) rsltbb<-rslta else rsltbb<-merge(rslta, rsltbb, 
                                                           by=c("ImageNumber","ObjectNumber"))
-    
+   }
+  rsltbb
   }
-  if(!exists("rslt"))rslt<-rsltbb else rslt<-rbind(rsltbb, rslt)
-  if(f==(length(temp)-1)) rm("rsltbb")
-}
 stopCluster(cl)
 registerDoSEQ()
 save(rslt,file="result of outliers elemination.RDATA")
 
 alp_model_f.sso<-merge(alp_model_f.ss[,c(1:3,length(alp_model_f.ss))],rslt,by="ImageNumber") 
-alp_model_f.sso$Class<-as.factor(alp_model_f.sso$Class)
+#alp_model_f.sso$Class<-as.factor(alp_model_f.sso$Class)
 ##take median per repeat
 library(plyr)
 alp_model_f.sso2<-ddply(alp_model_f.sso,"ImageNumber", numcolwise(median))
@@ -520,7 +520,7 @@ stopCluster(cl)
 registerDoSEQ()
 plot(rpartTune)
 predictors(rpartTune)
-plot(varImp(rpartTune),top=5,cex=4,pch=16,
+plot(varImp(rpartTune),top=10,cex=4,pch=16,
      main="Feature importance for CART method")
 varImp_re<-varImp(rpartTune)
 row.names(varImp_re$importance)[varImp_re$importance>0]
@@ -601,7 +601,9 @@ plotObsVsPred(predTargets)
 Observed = forTesting$Cell_Shape_Feature
 Predicted = predict(rfTune, forTesting)
 library(latticeExtra)
-xyplot(Observed ~ Predicted, panel = function(x, y, ...) {
+cor(Observed,Predicted)
+xyplot(Observed ~ Predicted, 
+       panel = function(x, y, ...) {
   panel.xyplot(x, y, ...)
   panel.lmlineq(x, y, adj = c(1,0), lty = 1,xol.text='red',
                 col.line = "blue", digits = 1,r.squared =TRUE)
