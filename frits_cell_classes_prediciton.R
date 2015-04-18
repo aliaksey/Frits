@@ -460,7 +460,7 @@ confusionMatrix(qdaPred, forTesting$Cluster)
 #################checking regression model does it works better
 #alp_model_f.sss.t
 ##selecting feature to use as predictor
-selected_variable<-"Cells_AreaShape_Eccentricity"
+selected_variable<-"Cells_AreaShape_FormFactor"
 alp.model.cell.regr.t<-merge(alp_model[,-c(2:6)],alp_model_f.sss.t[,
            c("feature.idx",selected_variable)],by="feature.idx",sort=F)
 colnames(alp.model.cell.regr.t)[colnames(alp.model.cell.regr.t)==selected_variable]<-
