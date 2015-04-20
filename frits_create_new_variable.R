@@ -29,6 +29,11 @@ summary(featind$PatDen2)
 ##actual feature area
 featind$PatAr<-featind$FCP*(featind$FeatSize^2)
 summary(featind$PatAr)
+plot(featind$PatAr,featind$FeatSize^2)
+##actual empty space area
+featind$SpcAr<-(1-featind$FCP)*(featind$FeatSize^2)
+summary(featind$SpcAr)
+plot(featind$SpcAr,featind$PatAr)
 
 ##Difference between pattern area and sum primitives areas
 featind$PatArDif<-featind$PatAr-featind$SumArea
