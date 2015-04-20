@@ -472,7 +472,7 @@ confusionMatrix(qdaPred, forTesting$Cluster)
 #selected_variable<-colnames(alp_model_f.sss.t)[ii]
 
 colnames(alp_model_f.sss.t)
-selected_variable<-"Cells_AreaShape_Compactness"
+selected_variable<-"Nuclei_AreaShape_FormFactor"
 
 alp.model.cell.regr.t<-merge(alp_model[,-c(2:6)],alp_model_f.sss.t[,
                                                                    c("feature.idx",selected_variable)],by="feature.idx",sort=F)
