@@ -21,10 +21,10 @@ load("data/ph_raw_data.RData")
 alp_model_morph.temp<-merge(alp_model,cell.ftrs,by.x="feature.idx",by.y="FeatureIdx")
 #Selecting features for anlaysis
 alp_model_morph<-alp_model_morph.temp[,c("feature.idx","ImageNumber","ObjectNumber",
-             colnames(alp_model_morph.temp)[grepl("Cells_AreaShape_",colnames(alp_model_morph.temp))&
-                                         !grepl("Zernike",colnames(alp_model_morph.temp))&
-                                           !grepl("Orientation",colnames(alp_model_morph.temp))&
-                                        !grepl("_Center_",colnames(alp_model_morph.temp))])]
+                                         colnames(alp_model_morph.temp)[grepl("Nuclei_AreaShape_",colnames(alp_model_morph.temp))&
+                                                                          !grepl("Zernike",colnames(alp_model_morph.temp))&
+                                                                          !grepl("Orientation",colnames(alp_model_morph.temp))&
+                                                                          !grepl("_Center_",colnames(alp_model_morph.temp))])]
 colnames(alp_model_morph)
 
 # ###get rid of highly correlated features
@@ -90,10 +90,10 @@ rslt<-foreach(i=unique(alp_model_f.ss[,"feature.idx"]), .combine='rbind') %dopar
                    temp2[,3]>(lbnda-1.5*iuda),]
     if (length(rslta[,1])==0) break
     if(f==4) rsltbb<-rslta else rsltbb<-merge(rslta, rsltbb, 
-                                                          by=c("ImageNumber","ObjectNumber"))
-   }
-  rsltbb
+                                              by=c("ImageNumber","ObjectNumber"))
   }
+  rsltbb
+}
 stopCluster(cl)
 registerDoSEQ()
 save(rslt,file="result of outliers elemination.RDATA")
@@ -120,7 +120,7 @@ save(alp_model_f.sss,file="Median cell shape features per surface.RDATA")
 cntr<-apply(alp_model_f.sss,2,function(x) median(x))
 scl<-apply(alp_model_f.sss,2,function(x) mad(x))
 alp_model_f.sss.scale<- scale(alp_model_f.sss,
-                                 center=cntr,scale=scl)
+                              center=cntr,scale=scl)
 boxplot(alp_model_f.sss.scale)
 ##Calculate PCA
 alp_model_f.sss.pca<-prcomp(alp_model_f.sss.scale, center=F, sclale=F )
@@ -158,8 +158,8 @@ clstrs<-as.data.frame(cbind(Cluster=cutree(hclustres.dend,k=clust.numb,
                                            order_clusters_as_data =F,
                                            sort_cluster_numbers = T),
                             FeatureIdx=rownames(as.matrix(cutree(hclustres.dend,k=clust.numb,
-                                         order_clusters_as_data =F,
-                                         sort_cluster_numbers = F)))))
+                                                                 order_clusters_as_data =F,
+                                                                 sort_cluster_numbers = F)))))
 
 #clstrs<-cutree(hclustres,k=clust.numb)
 ##merge clusters with cell shape data
@@ -259,17 +259,17 @@ multiClassSummary <- cmpfun(function (data, lev = NULL, model = NULL){
 
 cvCtrl <- trainControl(method = "repeatedcv", repeats = 10,
                        classProbs = TRUE,savePred=T,returnResamp="final")#,
-                      #  summaryFunction = multiClassSummary)
- cl <- makeCluster(detectCores(), type='PSOCK')
- registerDoParallel(cl)
+#  summaryFunction = multiClassSummary)
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
 
 #rpart
 rpartTune <- train(Cluster ~ ., data = forTraining, method = "rpart",
                    tuneLength = 10,
                    metric = 'Accuracy',
                    trControl = cvCtrl)
- stopCluster(cl)
- registerDoSEQ()
+stopCluster(cl)
+registerDoSEQ()
 # for(stat in c('Accuracy', 'Kappa', 'AccuracyLower', 'AccuracyUpper', 'AccuracyPValue', 
 #               'Sensitivity', 'Specificity', 'Pos_Pred_Value', 
 #               'Neg_Pred_Value', 'Detection_Rate', 'ROC', 'logLoss')) {
@@ -295,9 +295,9 @@ cl <- makeCluster(detectCores(), type='PSOCK')
 registerDoParallel(cl)
 
 knnTune <- train(Cluster ~ ., data = forTraining, method = "knn",
-                   tuneLength = 10,
-                   metric = 'Accuracy',
-                   trControl = cvCtrl)
+                 tuneLength = 10,
+                 metric = 'Accuracy',
+                 trControl = cvCtrl)
 stopCluster(cl)
 registerDoSEQ()
 # for(stat in c('Accuracy', 'Kappa', 'AccuracyLower', 'AccuracyUpper', 'AccuracyPValue', 
@@ -326,8 +326,8 @@ registerDoParallel(cl)
 svmTune <- train(Cluster ~ ., data = forTraining, method = "svmRadial",
                  tuneLength = 10,
                  preProc = c("center", "scale"),
-                   metric = 'Accuracy',
-                   trControl = cvCtrl)
+                 metric = 'Accuracy',
+                 trControl = cvCtrl)
 # for(stat in c('Accuracy', 'Kappa', 'AccuracyLower', 'AccuracyUpper', 'AccuracyPValue', 
 #               'Sensitivity', 'Specificity', 'Pos_Pred_Value', 
 #               'Neg_Pred_Value', 'Detection_Rate', 'ROC', 'logLoss')) {
@@ -475,7 +475,7 @@ colnames(alp_model_f.sss.t)
 selected_variable<-"Cells_AreaShape_Compactness"
 
 alp.model.cell.regr.t<-merge(alp_model[,-c(2:6)],alp_model_f.sss.t[,
-           c("feature.idx",selected_variable)],by="feature.idx",sort=F)
+                                                                   c("feature.idx",selected_variable)],by="feature.idx",sort=F)
 colnames(alp.model.cell.regr.t)[colnames(alp.model.cell.regr.t)==selected_variable]<-
   "Cell_Shape_Feature"
 alp.model.cell.regr<-alp.model.cell.regr.t[,-1]
@@ -493,7 +493,7 @@ forTesting <- data_for_model[-inTrain,]
 ##regression tree with CART metod for whole data
 
 rpart_training2 <-rpart(Cell_Shape_Feature~.,  method="anova", 
-      data=data_for_model)
+                        data=data_for_model)
 # plot(rpart_training2)
 # text(rpart_training2)
 ##polt as party object
@@ -617,10 +617,10 @@ library(latticeExtra)
 cor(Observed,Predicted)
 xyplot(Observed ~ Predicted, 
        panel = function(x, y, ...) {
-  panel.xyplot(x, y, ...)
-  panel.lmlineq(x, y, adj = c(1,0), lty = 1,xol.text='red',
-                col.line = "blue", digits = 1,r.squared =TRUE)
-})
+         panel.xyplot(x, y, ...)
+         panel.lmlineq(x, y, adj = c(1,0), lty = 1,xol.text='red',
+                       col.line = "blue", digits = 1,r.squared =TRUE)
+       })
 
 ##compare 
 predTargets.c <- extractPrediction(list(svmTune,rpartTune,rfTune), forTesting)
