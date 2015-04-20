@@ -8,13 +8,7 @@ library(gplots)
 set.seed(683475823)
 alp_model.temp<-read.csv("data/CSV Results/res2_Cell_Intensity_IntegratedIntensity_ALP.csv",stringsAsFactors=F)
 ##cleaning variables
-alp_model.2<-alp_model.temp[,-c(1,3:11,17:19)]
-##load new variables
-load("SurfaceFeaturesPlus.RData")
-#merge alp model with new variables
-alp_model<-merge(alp_model.2,featind[,c("feature.idx",
-            colnames(featind)[!colnames(featind)%in%colnames(alp_model.2)])])
-
+alp_model<-alp_model.temp[,-c(1,3:11,17:19)]
 
 ###get rid of highly correlated features
 corMatips <- cor(alp_model[,-c(1:6)], method="spearman")
@@ -124,7 +118,7 @@ library(pROC)
 rpartROC <- roc(predictor = rpartProbs$top,
                 response = forTesting$Class,
                 levels = rev(levels(forTesting$Class)))
-                
+
 plot(rpartROC, type = "S", print.thres = .5)
 rpartROC
 ##svm
@@ -183,11 +177,11 @@ plot(logitROC, type = "S", print.thres = .5)
 
 ##nb
 nbTune <- train(x = forTrainingX,
-                   y = forTraining$Class,
-                   method = "nb",
-                   tuneLength = 10,
-                   metric = "ROC",
-                   trControl = cvCtrl)
+                y = forTraining$Class,
+                method = "nb",
+                tuneLength = 10,
+                metric = "ROC",
+                trControl = cvCtrl)
 summary(nbTune)
 
 predictors(nbTune)
@@ -198,11 +192,11 @@ nbPred <- predict(nbTune, forTesting[, names(forTesting) != "Class"])
 confusionMatrix(nbPred, forTesting$Class)
 
 nbProbs <- predict(nbTune, forTesting[, names(forTesting) != "Class"],
-                      type = "prob")
+                   type = "prob")
 head(nbProbs)
 nbROC <- roc(predictor = nbProbs$top,
-                response = forTesting$Class,
-                levels = rev(levels(forTesting$Class)))
+             response = forTesting$Class,
+             levels = rev(levels(forTesting$Class)))
 plot(nbROC, type = "S", print.thres = .5)
 
 ##rf
@@ -233,11 +227,11 @@ plot(rfROC, type = "S", print.thres = .5)
 
 ##LDA
 ldaTune <- train(x = forTrainingX,
-                   y = forTraining$Class,
-                   method = "lda",
-                   tuneLength = 10,
-                   metric = "ROC",
-                   trControl = cvCtrl)
+                 y = forTraining$Class,
+                 method = "lda",
+                 tuneLength = 10,
+                 metric = "ROC",
+                 trControl = cvCtrl)
 summary(ldaTune)
 
 predictors(ldaTune)
@@ -248,11 +242,11 @@ ldaPred <- predict(ldaTune, forTesting[, names(forTesting) != "Class"])
 confusionMatrix(ldaPred, forTesting$Class)
 
 ldaProbs <- predict(ldaTune, forTesting[, names(forTesting) != "Class"],
-                      type = "prob")
+                    type = "prob")
 head(ldaProbs)
 ldaROC <- roc(predictor = ldaProbs$top,
-                response = forTesting$Class,
-                levels = rev(levels(forTesting$Class)))
+              response = forTesting$Class,
+              levels = rev(levels(forTesting$Class)))
 plot(ldaROC, type = "S", print.thres = .5)
 
 ##QDA
