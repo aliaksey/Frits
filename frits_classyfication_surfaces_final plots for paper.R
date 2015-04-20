@@ -8,7 +8,12 @@ library(gplots)
 set.seed(683475823)
 alp_model.temp<-read.csv("data/CSV Results/res2_Cell_Intensity_IntegratedIntensity_ALP.csv",stringsAsFactors=F)
 ##cleaning variables
-alp_model<-alp_model.temp[,-c(1,3:11,17:19)]
+alp_model.2<-alp_model.temp[,-c(1,3:11,17:19)]
+##load new variables
+load("SurfaceFeaturesPlus.RData")
+#merge alp model with new variables
+alp_model<-merge(alp_model.2,featind[,c("feature.idx",
+                                        colnames(featind)[!colnames(featind)%in%colnames(alp_model.2)])])
 
 ###get rid of highly correlated features
 corMatips <- cor(alp_model[,-c(1:6)], method="spearman")
