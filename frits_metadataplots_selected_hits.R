@@ -32,33 +32,54 @@ alp_mark_rank<-merge(integrated_intensity, merge(max_intensity,relative_intensit
 
 hit.surf<-c(11,42,46,1050,1147,2114,229,1018,1673,2150,443,864,689,494,2177)
 forplotcoll.fr.temp<-alp_integr_intensities[alp_integr_intensities$FeatureIdx%in%hit.surf,]
-#alp_integr_intensities.fs<-alp_integr_intensities.f[order(-alp_integr_intensities.f$AlpTrMeanFeatureMean),]
-#forplotcoll.fr<-merge(alp_integr_intensities.fs,forplotcoll.fr.temp, sort=F, all=F)
-
+# alp_integr_intensities.fs<-alp_integr_intensities.f[order(alp_integr_intensities.f$AlpTrMeanFeatureMedian),]
+# forplotcoll.fr<-merge(alp_integr_intensities.fs,forplotcoll.fr.temp, sort=F, all=F)
+#plot(forplotcoll.fr$AlpMedianIntegrativeI)
 large.surf.meta<-as.data.frame(cbind(FeatureIdx=hit.surf,SORT=as.character(c(1:14,"np")),Hit=
   c("high","high","high","high","low","high","low","high","high","high","high","low","high","low","blank")))
-forplotcoll.fr<-merge(large.surf.meta,forplotcoll.fr.temp,sort=F)
-###Trimmed mean
-forplottransf.fr <- transform(forplotcoll.fr[,c("SORT", "AlpTrMeanIntegrativeI","Hit")], SurfaceNumber = factor(SORT, 
-                levels = unique(as.character(forplotcoll.fr$SORT))))
-library(reshape2)
-forplottransfmelt.fr<-melt(forplottransf.fr, measure.vars ="AlpTrMeanIntegrativeI")
-library(ggplot2)
-ggplot(forplottransfmelt.fr, aes(SORT, value, fill=Hit))+
-  geom_boxplot(outlier.shape=NA)+theme(legend.position="none")+geom_jitter(size=3)+
-  ylab("Robust Mean Integrated Alp Intensity (a.u.)")+xlab("Surface Number")+ 
-  scale_x_discrete(limits=large.surf.meta$SORT)
+forplotcoll.fr<-merge(forplotcoll.fr.temp,large.surf.meta,sort=F)
+##sort surfaces
+library(plyr)
+SRank<-ddply(forplotcoll.fr,.(FeatureIdx),summarize,
+             AlpMed=median(AlpMedianIntegrativeI))
+SRank.s<-SRank[order(SRank$AlpMed),]
+SRank.s$RANK<-c(2,1,3:15)
+large.surf.meta.r<-merge(large.surf.meta,SRank.s)
+large.surf.meta.rs<-large.surf.meta.r[order(large.surf.meta.r$RANK),]
+large.surf.meta.rs$SORT<-as.character(large.surf.meta.rs$SORT)
+
+forplotcoll.fr2<-merge(large.surf.meta.rs,forplotcoll.fr.temp,sort=F)
+plot(forplotcoll.fr2$AlpMedianIntegrativeI)
+plot(forplotcoll.fr$AlpMedianIntegrativeI)
+
+# ###Trimmed mean
+# forplottransf.fr <- transform(forplotcoll.fr[,c("SORT", "AlpTrMeanIntegrativeI","Hit")], SurfaceNumber = factor(SORT, 
+#                 levels = unique(as.character(forplotcoll.fr$SORT))))
+# library(reshape2)
+# forplottransfmelt.fr<-melt(forplottransf.fr, measure.vars ="AlpTrMeanIntegrativeI")
+# library(ggplot2)
+# ggplot(forplottransfmelt.fr, aes(SORT, value, fill=Hit))+
+#   geom_boxplot(outlier.shape=NA)+theme(legend.position="none")+geom_jitter(size=3)+
+#   ylab("Robust Mean Integrated Alp Intensity (a.u.)")+xlab("Surface Number")+ 
+#   scale_x_discrete(limits=large.surf.meta$SORT)
 
 ###Median
-forplottransf.fr <- transform(forplotcoll.fr[,c("SORT", "AlpMedianIntegrativeI","Hit")], SurfaceNumber = factor(SORT, 
-                                                                                                                levels = unique(as.character(forplotcoll.fr$SORT))))
+forplottransf.fr <- transform(forplotcoll.fr2[,c("RANK", "AlpMedianIntegrativeI","Hit")], 
+      SurfaceNumber = factor(RANK, 
+    levels = unique(as.character(forplotcoll.fr2$RANK)),ordered = TRUE))
 library(reshape2)
 forplottransfmelt.fr<-melt(forplottransf.fr, measure.vars ="AlpMedianIntegrativeI")
 library(ggplot2)
-ggplot(forplottransfmelt.fr, aes(SORT, value, fill=Hit))+
-  geom_boxplot(outlier.shape=NA)+theme(legend.position="none")+geom_jitter(size=3)+
+ggplot(forplottransfmelt.fr, aes(SurfaceNumber, value, fill=Hit))+
+  geom_boxplot(outlier.shape=NA)+theme(legend.position="none")+
+  geom_jitter(position = position_jitter(height = .5, width = .1))+
   ylab("Median Integrated Alp Intensity (a.u.)")+xlab("Surface Number")+ 
-  scale_x_discrete(limits=large.surf.meta$SORT)
+      scale_x_discrete(limits=large.surf.meta.rs$RANK,labels=c(large.surf.meta.rs$SORT))+
+  theme_bw()+ 
+  theme(legend.position = c(.1, .8),text = element_text(size=20))
+
+###check this http://stackoverflow.com/questions/23564607/how-to-change-x-axis-tick-label-names-order-and-boxplot-colour-using-r-ggplot
+
 #####Some extra plots 
 # library(doBy)
 # icam_freq_stat <- summaryBy(Ratio ~ FeatureIdx, forplotcoll.fr,order=F, FUN = c(mean, sd))
