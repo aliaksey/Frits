@@ -13,7 +13,9 @@ summary(featind$TriArea)
 colnames(featind)
 
 ##sum of absolute primitive areas
-featind$SumArea<-featind$TriArea+featind$CircArea+featind$LineArea
+pshitsmodel$SumArea<-ipshitsmodel$TriArea*ipshitsmodel$NumTri+
+  ipshitsmodel$CircArea*ipshitsmodel$NumCirc+
+  ipshitsmodel$LineArea*ipshitsmodel$NumLine
 summary(featind$SumArea)
 
 ##number of patterns per surface
@@ -38,6 +40,15 @@ plot(featind$SpcAr,featind$PatAr)
 ##Difference between pattern area and sum primitives areas
 featind$PatArDif<-featind$PatAr-featind$SumArea
 summary(featind$PatArDif)
+
+# ipshitsmodel$RealArea<-0
+# ipshitsmodel[ipshitsmodel$DiffArea<=0.1&ipshitsmodel$FeatSize>10&ipshitsmodel$TNP<=6,
+#              "RealArea"]<-ipshitsmodel[ipshitsmodel$DiffArea<=0.1&ipshitsmodel$FeatSize>10&ipshitsmodel$TNP<=6,
+#                                        "PatArea"]/
+#   ipshitsmodel[ipshitsmodel$DiffArea<=0.1&ipshitsmodel$FeatSize>10&ipshitsmodel$TNP<=6,
+#                "TNP"]
+# table(ipshitsmodel$RealArea)
+
 
 ##total Number of Primitives
 featind$TNP<-featind$NumCirc+featind$NumTri+featind$NumLine

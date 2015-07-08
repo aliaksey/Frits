@@ -30,7 +30,7 @@ kwplot$Pvaluelog<-abs(log10(as.numeric(kwplot$Pvalue)))
 
 qplot(factor(kwplot$Intensity), kwplot$Pvaluelog, geom="bar", stat="identity")+ coord_flip()+
   geom_hline(yintercept = abs(log10(0.5)), colour="red")+ylab("-log10 p-value Kruskal wallis test")+
-  xlab("ALP Intensity")
+  xlab("ALP Intensity")+theme_bw()
 
 ##krusakl wallis for all dat
 pvintg.m<-kruskal.test(ALPCytoplasm_Intensity_IntegratedIntensity_ALP4Corr ~ FeatureIdx, data = alp_data)$p.value

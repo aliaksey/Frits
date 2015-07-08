@@ -207,6 +207,10 @@ cvCtrl <- trainControl(method = "repeatedcv", repeats = 10,
 # plot(nbROC, type = "S", print.thres = .5)
 
 ##rf
+library(doParallel)
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
+
 rfTune <- train(x = forTrainingX,
                 y = forTraining$Class,
                 method = "rf",
@@ -214,6 +218,9 @@ rfTune <- train(x = forTrainingX,
                 allowParallel=TRUE,
                 metric = "ROC",
                 trControl = cvCtrl)
+stopCluster(cl)
+registerDoSEQ()
+
 
 # summary(rfTune)
 # 
@@ -221,12 +228,13 @@ rfTune <- train(x = forTrainingX,
 plot(varImp(rfTune), top=20,cex=1.5,cex.lab=3)#,
    #  main="Feature importance for Random Forest method")
 # rfTune$finalModel
-# rfPred <- predict(rfTune, forTesting[, names(forTesting) != "Class"])
+rfPred <- predict(rfTune, forTesting[, names(forTesting) != "Class"])
 confusionMatrix(rfPred, forTesting$Class)
 
 rfProbs <- predict(rfTune, forTesting[, names(forTesting) != "Class"],
                    type = "prob")
 head(rfProbs)
+library(pROC)
 rfROC <- roc(predictor = rfProbs$Positive,
              response = forTesting$Class,
              levels = rev(levels(forTesting$Class)))
@@ -237,6 +245,18 @@ legend(x=0.6,y=0.2,
   legend=c(paste(" AUC=","0.98"),
     paste("Accuracy=","0.9" )),box.lwd = 0,box.col = "white",bg = "white")#,
    # lty=1, col=c("red","red"), bty='o', cex=1)
+
+library(ROCR)
+predrf <- prediction(rfProbs$Positive, forTesting$Class)
+perfrf <- performance( predrf, "tpr", "fpr")
+plot( perfrf, col="red",lty=1, lwd=3)
+abline(a=0,b=1,col="grey",lwd=1,lty=3)  
+auc<-performance(predrf,"auc")
+auc <- unlist(slot(auc, "y.values"))
+auct <- paste(c("AUC  = "),auc,sep="")
+legend(x=0.6,y=0.3,
+       legend=c(paste(" AUC=","0.99"),
+                paste("Accuracy=","0.96" )),box.lwd = 0,box.col = "white",bg = "white")
 
 # ##LDA
 # ldaTune <- train(x = forTrainingX,

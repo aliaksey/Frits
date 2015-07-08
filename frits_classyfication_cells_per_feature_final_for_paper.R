@@ -246,6 +246,9 @@ cvCtrl <- trainControl(method = "repeatedcv", repeats = 10,
 # plot(nbROC, type = "S", print.thres = .5)
 
 ##rf
+library(doParallel)
+cl <- makeCluster(detectCores(), type='PSOCK')
+registerDoParallel(cl)
 rfTune <- train(x = forTrainingX,
                 y = forTraining$Class,
                 method = "rf",
@@ -253,6 +256,9 @@ rfTune <- train(x = forTrainingX,
                 allowParallel=TRUE,
                 metric = "ROC",
                 trControl = cvCtrl)
+stopCluster(cl)
+registerDoSEQ()
+
 
 summary(rfTune)
 
@@ -273,8 +279,22 @@ plot(rfROC, type = "S", print.thres = 0.356,col = "red",lwd=2.5,
      ylab="True Positive Rate(Sensitivity)",
      xlab="False Positive rate (1-Specificity)")
 legend(x=0.6,y=0.2,
-       legend=c(paste(" AUC=","0.83"),
+       legend=c(paste(" AUC=","0.77"),
                 paste("Accuracy=","0.7" )),box.lwd = 0,box.col = "white",bg = "white")
+
+library(ROCR)
+predrf <- prediction(rfProbs$pos, forTesting$Class)
+perfrf <- performance( predrf, "tpr", "fpr")
+plot( perfrf, col="red",lty=1, lwd=3)
+abline(a=0,b=1,col="grey",lwd=1,lty=3)  
+auc<-performance(predrf,"auc")
+auc <- unlist(slot(auc, "y.values"))
+auct <- paste(c("AUC  = "),auc,sep="")
+legend(x=0.6,y=0.3,
+       legend=c(paste(" AUC=","0.78"),
+                paste("Accuracy=","0.72" )),box.lwd = 0,box.col = "white",bg = "white")
+
+auc
 # 
 # ##LDA
 # ldaTune <- train(x = forTrainingX,
@@ -353,11 +373,14 @@ legend(x=0.6,y=0.2,
 # rocimpsvm[order(-rocimpsvm[,2]),]
 # 
 # ## plot alp intensity values base on that parameters
-# library(ggplot2)
-# ggplot(alp_model_f.sso3.f,aes(Cells_AreaShape_Solidity,
-#                               Cells_AreaShape_Compactness,shape=Class,colour=median))+geom_point()
-# ggplot(alp_model_f.sso3.f,aes(Cells_AreaShape_Solidity,
-#                               Cells_AreaShape_Compactness,colour=as.factor(Class)))+geom_point()
+ library(ggplot2)
+ggplot(alp_model_f.sso3.f,aes(Cells_AreaShape_Solidity,
+                              Cells_AreaShape_Compactness,shape=Class,colour=median))+geom_point()
+ggplot(data_for_model,aes(Compactness,
+                          Solidity,colour=as.factor(Class)))+geom_point()+
+  theme_bw()+
+  scale_color_discrete(name ="Surface Class for \n Alp expression", 
+                       labels=c("Negative","Positive"))+ theme(legend.position = c(.8, .8))
 # 
 # create per cell plot
 # predare data select image that passed outlier removal
@@ -405,8 +428,6 @@ ggplot(cell_plot.rf.cl,aes(Compactness,Solidity,
          colour=as.factor(Class)))+geom_point()+theme_bw()+
   scale_color_discrete(name ="Surface Class for \n Alp expression", 
                          labels=c("Negative","Positive"))+ theme(legend.position = c(.8, .8))
-
-
 # ggplot(cell_plot.rf,aes(Solidity,Compactness,colour=ALPCytoplasm_Intensity_IntegratedIntensity_ALP4Corr))+
 #   geom_point()+
 #   scale_color_gradient2(limits=c(0, 1000),low = "blue", midpoint = 300, mid = "yellow", high = "red",space="Lab")+
