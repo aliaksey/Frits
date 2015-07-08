@@ -465,164 +465,172 @@ confusionMatrix(qdaPred, forTesting$Cluster)
 #################checking regression model does it works better
 #alp_model_f.sss.t
 ##try all variables
-
-#for(ii in 2:length(alp_model_f.sss.t)){
-##selecting feature to use as predictor
-
-#selected_variable<-colnames(alp_model_f.sss.t)[ii]
-
-colnames(alp_model_f.sss.t)
-selected_variable<-"Nuclei_AreaShape_FormFactor"
-
-alp.model.cell.regr.t<-merge(alp_model[,-c(2:6)],alp_model_f.sss.t[,
-                                                                   c("feature.idx",selected_variable)],by="feature.idx",sort=F)
-colnames(alp.model.cell.regr.t)[colnames(alp.model.cell.regr.t)==selected_variable]<-
-  "Cell_Shape_Feature"
-alp.model.cell.regr<-alp.model.cell.regr.t[,-1]
-
-##selecting samples for training and testing
-data_for_model<-alp.model.cell.regr
-
-class_data<-data_for_model$Cell_Shape_Feature
-inTrain <- createDataPartition(class_data, p =3/4, list = FALSE)
-forTraining <- data_for_model[inTrain,]
-forTrainingX <- forTraining[, !colnames(forTraining)=="Cell_Shape_Feature"]
-#create testing set for features selection
-forTesting <- data_for_model[-inTrain,]
-
-##regression tree with CART metod for whole data
-
-rpart_training2 <-rpart(Cell_Shape_Feature~.,  method="anova", 
-                        data=data_for_model)
-# plot(rpart_training2)
-# text(rpart_training2)
-##polt as party object
-rpart1a2 <- as.party(rpart_training2)
-plot(rpart1a2, main="anova with CART for Alp integrated intensity")
-
-##regression tree with CART metod for simplified data
-rpart_training3 <- rpart(Cell_Shape_Feature~.,  method="anova", 
-                         data=data_for_model)
-printcp(rpart_training3)
-plotcp(rpart_training3)
-rsq.rpart(rpart_training3)
-summary(rpart_training3)
-rpart_training4<-prune(rpart_training3, cp= rpart_training3$cptable[which.min(rpart_training3$cptable[,"xerror"]),"CP"]) 
-##polt as party object
-rpart1a3 <- as.party(rpart_training3)
-plot(rpart1a3, main="anova with CART for Alp integrated intensity")
-rpart1a4 <- as.party(rpart_training4)
-plot(rpart1a4, main="anova with CART for Alp integrated intensity,Pruned")
-
-
-# rpartPred <- predict(rpart_training3, forTesting)
-# summary(rpartPred)
-#______________________________________________________________________________________ 
-##tunning the model
-cvCtrl <- trainControl(method = "repeatedcv", repeats = 10,
-                       summaryFunction = defaultSummary,
-                       savePred=T,returnResamp="final")
-cl <- makeCluster(detectCores(), type='PSOCK')
-registerDoParallel(cl)
-#rpart
-rpartTune <- train(Cell_Shape_Feature ~ ., data = forTraining, method = "rpart",
+# alp_model_f.sss.t<-alp_model_f.sss.t[,colnames(alp_model_f.sss.t)!="Nuclei_AreaShape_EulerNumber"]
+# 
+# for(ii in 2:length(alp_model_f.sss.t)){
+#   #selecting feature to use as predictor
+#   
+#   selected_variable<-colnames(alp_model_f.sss.t)[ii]
+#   print(selected_variable)
+  colnames(alp_model_f.sss.t)
+  selected_variable<-"Cells_AreaShape_MinorAxisLength"
+  
+  alp.model.cell.regr.t<-merge(alp_model[,-c(2:6)],alp_model_f.sss.t[,
+                                                               c("feature.idx",selected_variable)],by="feature.idx",sort=F)
+  colnames(alp.model.cell.regr.t)[colnames(alp.model.cell.regr.t)==selected_variable]<-
+    "Nuclei_Shape_Feature"
+  alp.model.cell.regr<-alp.model.cell.regr.t[,-1]
+  
+  ##selecting samples for training and testing
+  data_for_model<-alp.model.cell.regr
+  
+  class_data<-data_for_model$Nuclei_Shape_Feature
+  inTrain <- createDataPartition(class_data, p =3/4, list = FALSE)
+  forTraining <- data_for_model[inTrain,]
+  forTrainingX <- forTraining[, !colnames(forTraining)=="Nuclei_Shape_Feature"]
+  #create testing set for features selection
+  forTesting <- data_for_model[-inTrain,]
+  
+  ##regression tree with CART metod for whole data
+  # 
+  # rpart_training2 <-rpart(Nuclei_Shape_Feature~.,  method="anova", 
+  #                         data=data_for_model)
+  # # plot(rpart_training2)
+  # # text(rpart_training2)
+  # ##polt as party object
+  # rpart1a2 <- as.party(rpart_training2)
+  # plot(rpart1a2, main="anova with CART for Alp integrated intensity")
+  # 
+  # ##regression tree with CART metod for simplified data
+  # rpart_training3 <- rpart(Nuclei_Shape_Feature~.,  method="anova", 
+  #                          data=data_for_model)
+  # printcp(rpart_training3)
+  # plotcp(rpart_training3)
+  # rsq.rpart(rpart_training3)
+  # #summary(rpart_training3)
+  # rpart_training4<-prune(rpart_training3, cp= rpart_training3$cptable[which.min(rpart_training3$cptable[,"xerror"]),"CP"]) 
+  # ##polt as party object
+  # rpart1a3 <- as.party(rpart_training3)
+  # plot(rpart1a3, main="anova with CART for Alp integrated intensity")
+  # rpart1a4 <- as.party(rpart_training4)
+  # plot(rpart1a4, main="anova with CART for Alp integrated intensity,Pruned")
+  
+  
+  # rpartPred <- predict(rpart_training3, forTesting)
+  # summary(rpartPred)
+  #______________________________________________________________________________________ 
+  ##tunning the model
+  cvCtrl <- trainControl(method = "repeatedcv", repeats = 10,
+                         summaryFunction = defaultSummary,
+                         savePred=T,returnResamp="final")
+  cl <- makeCluster(detectCores(), type='PSOCK')
+  registerDoParallel(cl)
+  #rpart
+  rpartTune <- train(Nuclei_Shape_Feature ~ ., data = forTraining, method = "rpart",
+                     tuneLength = 10,
+                     metric = "RMSE",
+                     trControl = cvCtrl)
+  stopCluster(cl)
+  registerDoSEQ()
+  # plot(rpartTune)
+  # predictors(rpartTune)
+  # plot(varImp(rpartTune),top=10,cex=4,pch=16,
+  #      main="Feature importance for CART method")
+  # varImp_re<-varImp(rpartTune)
+  # row.names(varImp_re$importance)[varImp_re$importance>0]
+  # plot.train(rpartTune)
+  #print.train(rpartTune)
+  # plot(rpartTune, scales = list(x = list(log = 10)))
+  ##plot prediction vs observed
+  #in caret package 
+  predTargets <- extractPrediction(list(rpartTune), testX=forTesting)
+  plotObsVsPred(predTargets)
+  #in latice extra package
+  Observed = forTesting$Nuclei_Shape_Feature
+  Predicted = predict(rpartTune, forTesting)
+  print("CART")
+  print(cor(Observed,Predicted))
+  library(latticeExtra)
+  xyplot(Observed ~ Predicted, panel = function(x, y, ...) {
+    panel.xyplot(x, y, ...)
+    panel.lmlineq(x, y, adj = c(1,0), lty = 1,xol.text='red',
+                  col.line = "blue", digits = 1,r.squared =TRUE)
+  })
+  
+  library(doParallel)
+  cl <- makeCluster(detectCores(), type='PSOCK')
+  registerDoParallel(cl)
+  ##svm
+  svmTune <- train(Nuclei_Shape_Feature ~ ., data = forTraining,
+                   method = "svmRadial",
                    tuneLength = 10,
+                   preProc = c("center", "scale"),
                    metric = "RMSE",
                    trControl = cvCtrl)
-stopCluster(cl)
-registerDoSEQ()
-plot(rpartTune)
-predictors(rpartTune)
-plot(varImp(rpartTune),top=10,cex=4,pch=16,
-     main="Feature importance for CART method")
-varImp_re<-varImp(rpartTune)
-row.names(varImp_re$importance)[varImp_re$importance>0]
-plot.train(rpartTune)
-#print.train(rpartTune)
-plot(rpartTune, scales = list(x = list(log = 10)))
-##plot prediction vs observed
-#in caret package 
-predTargets <- extractPrediction(list(rpartTune), testX=forTesting)
-plotObsVsPred(predTargets)
-#in latice extra package
-Observed = forTesting$Cell_Shape_Feature
-Predicted = predict(rpartTune, forTesting)
-library(latticeExtra)
-xyplot(Observed ~ Predicted, panel = function(x, y, ...) {
-  panel.xyplot(x, y, ...)
-  panel.lmlineq(x, y, adj = c(1,0), lty = 1,xol.text='red',
-                col.line = "blue", digits = 1,r.squared =TRUE)
-})
-
-library(doParallel)
-cl <- makeCluster(detectCores(), type='PSOCK')
-registerDoParallel(cl)
-##svm
-svmTune <- train(Cell_Shape_Feature ~ ., data = forTraining,
-                 method = "svmRadial",
-                 tuneLength = 10,
-                 preProc = c("center", "scale"),
-                 metric = "RMSE",
-                 trControl = cvCtrl)
-stopCluster(cl)
-registerDoSEQ()
-
-svmTune
-
-#predictors(svmTune)
-plot(varImp(svmTune),top=17,cex=4,pch=16,cex.axis=30,
-     main="Feature importance for SVM method")
-svmTune$finalModel
-##plot prediction vs observed
-#in caret package 
-predTargets <- extractPrediction(list(svmTune), testX=forTesting)
-plotObsVsPred(predTargets)
-#in latice extra package
-Observed = forTesting$Cell_Shape_Feature
-Predicted = predict(svmTune, forTesting)
-library(latticeExtra)
-xyplot(Observed ~ Predicted, panel = function(x, y, ...) {
-  panel.xyplot(x, y, ...)
-  panel.lmlineq(x, y, adj = c(1,0), lty = 1,xol.text='red',
-                col.line = "blue", digits = 1,r.squared =TRUE)
-})
-##RF
-cl <- makeCluster(detectCores(), type='PSOCK')
-registerDoParallel(cl)
-rfTune <- train(x = forTrainingX,
-                y = forTraining$Cell_Shape_Feature,
-                method = "rf",
-                tuneLength = 10,
-                prox=TRUE,
-                allowParallel=TRUE,
-                metric = "RMSE",
-                trControl = cvCtrl)
-stopCluster(cl)
-registerDoSEQ()
-summary(rfTune)
-
-
-#predictors(rfTune)
-plot(varImp(rfTune),cex=4,pch=16,cex.axis=30,
-     main="Feature importance for rf method")
-rfTune$finalModel
-##plot prediction vs observed
-#in caret package 
-predTargets <- extractPrediction(list(rfTune), testX=forTesting)
-plotObsVsPred(predTargets)
-#in latice extra package
-Observed = forTesting$Cell_Shape_Feature
-Predicted = predict(rfTune, forTesting)
-library(latticeExtra)
-cor(Observed,Predicted)
-xyplot(Observed ~ Predicted, 
-       panel = function(x, y, ...) {
-         panel.xyplot(x, y, ...)
-         panel.lmlineq(x, y, adj = c(1,0), lty = 1,xol.text='red',
-                       col.line = "blue", digits = 1,r.squared =TRUE)
-       })
-
-##compare 
-predTargets.c <- extractPrediction(list(svmTune,rpartTune,rfTune), forTesting)
-plotObsVsPred(predTargets.c)
+  stopCluster(cl)
+  registerDoSEQ()
+  
+  svmTune
+  
+  #predictors(svmTune)
+  # plot(varImp(svmTune),top=17,cex=4,pch=16,cex.axis=30,
+  #      main="Feature importance for SVM method")
+  # svmTune$finalModel
+  ##plot prediction vs observed
+  #in caret package 
+  predTargets <- extractPrediction(list(svmTune), testX=forTesting)
+  plotObsVsPred(predTargets)
+  #in latice extra package
+  Observed = forTesting$Nuclei_Shape_Feature
+  Predicted = predict(svmTune, forTesting)
+  print("SVM")
+  print(cor(Observed,Predicted))
+  library(latticeExtra)
+  xyplot(Observed ~ Predicted, panel = function(x, y, ...) {
+    panel.xyplot(x, y, ...)
+    panel.lmlineq(x, y, adj = c(1,0), lty = 1,xol.text='red',
+                  col.line = "blue", digits = 1,r.squared =TRUE)
+  })
+  ##RF
+  cl <- makeCluster(detectCores(), type='PSOCK')
+  registerDoParallel(cl)
+  rfTune <- train(x = forTrainingX,
+                  y = forTraining$Nuclei_Shape_Feature,
+                  method = "rf",
+                  tuneLength = 10,
+                  prox=TRUE,
+                  allowParallel=TRUE,
+                  metric = "RMSE",
+                  trControl = cvCtrl)
+  stopCluster(cl)
+  registerDoSEQ()
+  # summary(rfTune)
+  
+  
+  #predictors(rfTune)
+  # plot(varImp(rfTune),cex=4,pch=16,cex.axis=30,
+  #      main="Feature importance for rf method")
+  # rfTune$finalModel
+  ##plot prediction vs observed
+  #in caret package 
+  predTargets <- extractPrediction(list(rfTune), testX=forTesting)
+  plotObsVsPred(predTargets)
+  #in latice extra package
+  Observed = forTesting$Nuclei_Shape_Feature
+  Predicted = predict(rfTune, forTesting)
+  print("RF")
+  print(cor(Observed,Predicted))
+  
+  library(latticeExtra)
+  
+  xyplot(Observed ~ Predicted, 
+         panel = function(x, y, ...) {
+           panel.xyplot(x, y, ...)
+           panel.lmlineq(x, y, adj = c(1,0), lty = 1,xol.text='red',
+                         col.line = "blue", digits = 1,r.squared =TRUE)
+         })
+  
+  ##compare 
+  predTargets.c <- extractPrediction(list(svmTune,rpartTune,rfTune), forTesting)
+  plotObsVsPred(predTargets.c)
 #}

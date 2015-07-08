@@ -200,6 +200,7 @@ rpart_training2 <- rpart(Cluster~.,  method="class", data=data_for_model)
 #plot(rpart_training)
 #text(rpart_training)
 ##polt as party object
+library(partykit)
 rpart1a2 <- as.party(rpart_training2)
 plot(rpart1a2, main="Pruned CART Clusteryfication tree for OCT4 hits")
 
@@ -470,13 +471,13 @@ confusionMatrix(qdaPred, forTesting$Cluster)
 #alp_model_f.sss.t
 ##try all variables
 
-#for(ii in 2:length(alp_model_f.sss.t)){
-##selecting feature to use as predictor
+for(ii in 2:length(alp_model_f)){
+#selecting feature to use as predictor
 
-#selected_variable<-colnames(alp_model_f.sss.t)[ii]
-
-colnames(alp_model_f.sss)
-selected_variable<-"Cells_AreaShape_FormFactor"
+selected_variable<-colnames(alp_model_f)[ii]
+print(selected_variable)
+#colnames(alp_model_f)
+#selected_variable<-"Cells_AreaShape_MinorAxisLength"
 
 alp.model.cell.regr.t<-merge(alp_model[,-c(2:6)],alp_model_f[,
                                                                    c("feature.idx",selected_variable)],by="feature.idx",sort=F)
@@ -495,28 +496,28 @@ forTrainingX <- forTraining[, !colnames(forTraining)=="Cell_Shape_Feature"]
 forTesting <- data_for_model[-inTrain,]
 
 ##regression tree with CART metod for whole data
-
-rpart_training2 <-rpart(Cell_Shape_Feature~.,  method="anova", 
-                        data=data_for_model)
-# plot(rpart_training2)
-# text(rpart_training2)
-##polt as party object
-rpart1a2 <- as.party(rpart_training2)
-plot(rpart1a2, main="anova with CART for Alp integrated intensity")
-
-##regression tree with CART metod for simplified data
-rpart_training3 <- rpart(Cell_Shape_Feature~.,  method="anova", 
-                         data=data_for_model)
-printcp(rpart_training3)
-plotcp(rpart_training3)
-rsq.rpart(rpart_training3)
-summary(rpart_training3)
-rpart_training4<-prune(rpart_training3, cp= rpart_training3$cptable[which.min(rpart_training3$cptable[,"xerror"]),"CP"]) 
-##polt as party object
-rpart1a3 <- as.party(rpart_training3)
-plot(rpart1a3, main="anova with CART for Alp integrated intensity")
-rpart1a4 <- as.party(rpart_training4)
-plot(rpart1a4, main="anova with CART for Alp integrated intensity,Pruned")
+# 
+# rpart_training2 <-rpart(Cell_Shape_Feature~.,  method="anova", 
+#                         data=data_for_model)
+# # plot(rpart_training2)
+# # text(rpart_training2)
+# ##polt as party object
+# rpart1a2 <- as.party(rpart_training2)
+# plot(rpart1a2, main="anova with CART for Alp integrated intensity")
+# 
+# ##regression tree with CART metod for simplified data
+# rpart_training3 <- rpart(Cell_Shape_Feature~.,  method="anova", 
+#                          data=data_for_model)
+# printcp(rpart_training3)
+# plotcp(rpart_training3)
+# rsq.rpart(rpart_training3)
+# #summary(rpart_training3)
+# rpart_training4<-prune(rpart_training3, cp= rpart_training3$cptable[which.min(rpart_training3$cptable[,"xerror"]),"CP"]) 
+# ##polt as party object
+# rpart1a3 <- as.party(rpart_training3)
+# plot(rpart1a3, main="anova with CART for Alp integrated intensity")
+# rpart1a4 <- as.party(rpart_training4)
+# plot(rpart1a4, main="anova with CART for Alp integrated intensity,Pruned")
 
 
 # rpartPred <- predict(rpart_training3, forTesting)
@@ -535,15 +536,15 @@ rpartTune <- train(Cell_Shape_Feature ~ ., data = forTraining, method = "rpart",
                    trControl = cvCtrl)
 stopCluster(cl)
 registerDoSEQ()
-plot(rpartTune)
-predictors(rpartTune)
-plot(varImp(rpartTune),top=10,cex=4,pch=16,
-     main="Feature importance for CART method")
-varImp_re<-varImp(rpartTune)
-row.names(varImp_re$importance)[varImp_re$importance>0]
-plot.train(rpartTune)
+# plot(rpartTune)
+# predictors(rpartTune)
+# plot(varImp(rpartTune),top=10,cex=4,pch=16,
+#      main="Feature importance for CART method")
+# varImp_re<-varImp(rpartTune)
+# row.names(varImp_re$importance)[varImp_re$importance>0]
+# plot.train(rpartTune)
 #print.train(rpartTune)
-plot(rpartTune, scales = list(x = list(log = 10)))
+# plot(rpartTune, scales = list(x = list(log = 10)))
 ##plot prediction vs observed
 #in caret package 
 predTargets <- extractPrediction(list(rpartTune), testX=forTesting)
@@ -551,6 +552,8 @@ plotObsVsPred(predTargets)
 #in latice extra package
 Observed = forTesting$Cell_Shape_Feature
 Predicted = predict(rpartTune, forTesting)
+print("CART")
+print(cor(Observed,Predicted))
 library(latticeExtra)
 xyplot(Observed ~ Predicted, panel = function(x, y, ...) {
   panel.xyplot(x, y, ...)
@@ -574,9 +577,9 @@ registerDoSEQ()
 svmTune
 
 #predictors(svmTune)
-plot(varImp(svmTune),top=17,cex=4,pch=16,cex.axis=30,
-     main="Feature importance for SVM method")
-svmTune$finalModel
+# plot(varImp(svmTune),top=17,cex=4,pch=16,cex.axis=30,
+#      main="Feature importance for SVM method")
+# svmTune$finalModel
 ##plot prediction vs observed
 #in caret package 
 predTargets <- extractPrediction(list(svmTune), testX=forTesting)
@@ -584,6 +587,8 @@ plotObsVsPred(predTargets)
 #in latice extra package
 Observed = forTesting$Cell_Shape_Feature
 Predicted = predict(svmTune, forTesting)
+print("SVM")
+print(cor(Observed,Predicted))
 library(latticeExtra)
 xyplot(Observed ~ Predicted, panel = function(x, y, ...) {
   panel.xyplot(x, y, ...)
@@ -603,13 +608,13 @@ rfTune <- train(x = forTrainingX,
                 trControl = cvCtrl)
 stopCluster(cl)
 registerDoSEQ()
-summary(rfTune)
+# summary(rfTune)
 
 
 #predictors(rfTune)
-plot(varImp(rfTune),cex=4,pch=16,cex.axis=30,
-     main="Feature importance for rf method")
-rfTune$finalModel
+# plot(varImp(rfTune),cex=4,pch=16,cex.axis=30,
+#      main="Feature importance for rf method")
+# rfTune$finalModel
 ##plot prediction vs observed
 #in caret package 
 predTargets <- extractPrediction(list(rfTune), testX=forTesting)
@@ -617,8 +622,11 @@ plotObsVsPred(predTargets)
 #in latice extra package
 Observed = forTesting$Cell_Shape_Feature
 Predicted = predict(rfTune, forTesting)
+print("RF")
+print(cor(Observed,Predicted))
+
 library(latticeExtra)
-cor(Observed,Predicted)
+
 xyplot(Observed ~ Predicted, 
        panel = function(x, y, ...) {
          panel.xyplot(x, y, ...)
@@ -629,4 +637,4 @@ xyplot(Observed ~ Predicted,
 ##compare 
 predTargets.c <- extractPrediction(list(svmTune,rpartTune,rfTune), forTesting)
 plotObsVsPred(predTargets.c)
-#}
+}
