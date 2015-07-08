@@ -44,7 +44,7 @@ rownames(alp_model_f)<-alp_model_f$Metadata_FeatureIdx
 alp_model_f.s<-alp_model_f[order(alp_model_f$median),]
 alp_model_f.ss<-alp_model_f.s[c(1:100,2077:2176),]
 alp_model_f.ss$Class<-c(rep("Negative",100),rep("Positive",100))
-alp_model_f.sss<-alp_model_f.ss[,-c(1:6)]
+alp_model_f.sss<-alp_model_f.ss[,!colnames(alp_model_f.ss)%in%c("median","feature.idx","Metadata_FeatureIdx")]
 plot(alp_model_f.ss$median)
 alp_model_f.sss$Class<-as.factor(alp_model_f.sss$Class)
 # #for new calculation
@@ -69,7 +69,7 @@ alp_model_f.sss$Class<-as.factor(alp_model_f.sss$Class)
 ##creating model
 
 ##selecting samples for training and testing
-data_for_model<-alp_model_f.sss[,colnames(alp_model_f.sss)!="median"]
+data_for_model<-alp_model_f.sss
 #data_for_model<-data_for_model[,colnames(data_for_model)!="PatArDif"]
 #data_for_model<-alp_model_f.sss[,colnames(alp_model_f.sss2)!="median"]
 class_data<-data_for_model[,"Class"]
