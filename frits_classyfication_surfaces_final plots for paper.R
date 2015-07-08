@@ -30,10 +30,10 @@ corrplot(corMatips.f)
 alp_model_f[alp_model_f$feature.idx==2177,"feature.idx"]<-paste(2177,c(1:2),sep="_")
 rownames(alp_model_f)<-alp_model_f$feature.idx
 #add new ranking
-load("Alp_intensities_rank_Alex.RData")
-alp_model_f<-merge(alp_model_f,alp_integr_intensities.f,by.x="feature.idx",by.y="FeatureIdx")
-alp_model_f$median.new<-alp_model_f$AlpTrMeanFeatureMean
-alp_model_f<-alp_model_f[,!colnames(alp_model_f)%in%c("AlpTrMeanFeatureMean","AlpTrMeanFeatureMedian")]
+# load("Alp_intensities_rank_Alex.RData")
+# alp_model_f<-merge(alp_model_f,alp_integr_intensities.f,by.x="feature.idx",by.y="FeatureIdx")
+# alp_model_f$median.new<-alp_model_f$AlpTrMeanFeatureMean
+# alp_model_f<-alp_model_f[,!colnames(alp_model_f)%in%c("AlpTrMeanFeatureMean","AlpTrMeanFeatureMedian")]
 #Selecting hit 100 from both sides
 alp_model_f.s<-alp_model_f[order(alp_model_f$median),]
 alp_model_f.ss<-alp_model_f.s[c(1:100,2077:2176),]
@@ -41,15 +41,15 @@ alp_model_f.ss$Class<-c(rep("Negative",100),rep("Positive",100))
 alp_model_f.sss<-alp_model_f.ss[,-c(1:6)]
 plot(alp_model_f.ss$median)
 alp_model_f.sss$Class<-as.factor(alp_model_f.sss$Class)
-#for new calculation
-alp_model_f.s2<-alp_model_f[order(alp_model_f$median.new),]
-alp_model_f.ss2<-alp_model_f.s2[c(1:100,2077:2176),]
-alp_model_f.ss2$Class<-c(rep("bottom",100),rep("top",100))
-alp_model_f.sss2<-alp_model_f.ss2[,-c(1:6)]
-alp_model_f.sss2$Class<-as.factor(alp_model_f.sss2$Class)
-##check are any correlation between two ranks
-plot(alp_model_f.sss$median,alp_model_f.sss2$median.new)
-table(alp_model_f.sss2$median.new)
+# #for new calculation
+# alp_model_f.s2<-alp_model_f[order(alp_model_f$median.new),]
+# alp_model_f.ss2<-alp_model_f.s2[c(1:100,2077:2176),]
+# alp_model_f.ss2$Class<-c(rep("bottom",100),rep("top",100))
+# alp_model_f.sss2<-alp_model_f.ss2[,-c(1:6)]
+# alp_model_f.sss2$Class<-as.factor(alp_model_f.sss2$Class)
+# ##check are any correlation between two ranks
+# plot(alp_model_f.sss$median,alp_model_f.sss2$median.new)
+#table(alp_model_f.sss2$median.new)
 ##selecting hits
 # x<-row.names(alp_model_f.sss[alp_model_f.sss$Class=="top",])
 # #writeClipboard(x)

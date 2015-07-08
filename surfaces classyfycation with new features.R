@@ -18,8 +18,8 @@ load("data/TopoFeature.RDATA")
 load("data/TopoFeatureFull.RDATA")
 
 #alp_model<-TopoFeature
-alp_model<-TopoFeatureFull
-
+alp_model<-merge(TopoFeatureFull,alp_model.2[,c("feature.idx","median")],by.x="Metadata_FeatureIdx",by.y="feature.idx")
+alp_model<-alp_model[,colnames(alp_model)!="feature.idx"]
 # 
 # ###get rid of highly correlated features
 # corMatips <- cor(alp_model[,-c(1:6)], method="spearman")
@@ -30,32 +30,32 @@ alp_model<-TopoFeatureFull
 
 alp_model_f<-alp_model
 
-corMatips.f <- cor(alp_model_f[,-1],method="spearman")
+#corMatips.f <- cor(alp_model_f[,-1],method="spearman")
 #corrplot(corMatips.f)
 ##rename rows
 alp_model_f[alp_model_f$Metadata_FeatureIdx==2177,"Metadata_FeatureIdx"]<-paste(2177,c(1:2),sep="_")
 rownames(alp_model_f)<-alp_model_f$Metadata_FeatureIdx
 #add new ranking
-load("Alp_intensities_rank_Alex.RData")
-alp_model_f<-merge(alp_model_f,alp_integr_intensities.f,by.x="Metadata_FeatureIdx",by.y="FeatureIdx")
-alp_model_f$median.new<-alp_model_f$AlpTrMeanFeatureMean
-alp_model_f<-alp_model_f[,!colnames(alp_model_f)%in%c("AlpTrMeanFeatureMean","AlpTrMeanFeatureMedian")]
-#Selecting hit 100 from both sides
+# load("Alp_intensities_rank_Alex.RData")
+# alp_model_f<-merge(alp_model_f,alp_integr_intensities.f,by.x="Metadata_FeatureIdx",by.y="FeatureIdx")
+#alp_model_f$median.new<-alp_model_f$AlpTrMeanFeatureMean
+# alp_model_f<-alp_model_f[,!colnames(alp_model_f)%in%c("AlpTrMeanFeatureMean","AlpTrMeanFeatureMedian")]
+# #Selecting hit 100 from both sides
 alp_model_f.s<-alp_model_f[order(alp_model_f$median),]
 alp_model_f.ss<-alp_model_f.s[c(1:100,2077:2176),]
 alp_model_f.ss$Class<-c(rep("Negative",100),rep("Positive",100))
-alp_model_f.sss<-alp_model_f.ss[,-c(1:6)]
+alp_model_f.sss<-alp_model_f.ss[,!colnames(alp_model_f.ss)%in%c("median","feature.idx","Metadata_FeatureIdx")]
 plot(alp_model_f.ss$median)
 alp_model_f.sss$Class<-as.factor(alp_model_f.sss$Class)
-#for new calculation
-alp_model_f.s2<-alp_model_f[order(alp_model_f$median.new),]
-alp_model_f.ss2<-alp_model_f.s2[c(1:100,2077:2176),]
-alp_model_f.ss2$Class<-c(rep("bottom",100),rep("top",100))
-alp_model_f.sss2<-alp_model_f.ss2[,-c(1:6)]
-alp_model_f.sss2$Class<-as.factor(alp_model_f.sss2$Class)
+# #for new calculation
+# alp_model_f.s2<-alp_model_f[order(alp_model_f$median.new),]
+# alp_model_f.ss2<-alp_model_f.s2[c(1:100,2077:2176),]
+# alp_model_f.ss2$Class<-c(rep("bottom",100),rep("top",100))
+# alp_model_f.sss2<-alp_model_f.ss2[,-c(1:6)]
+# alp_model_f.sss2$Class<-as.factor(alp_model_f.sss2$Class)
 ##check are any correlation between two ranks
-plot(alp_model_f.sss$median,alp_model_f.sss2$median.new)
-table(alp_model_f.sss2$median.new)
+# plot(alp_model_f.sss$median,alp_model_f.sss2$median.new)
+# table(alp_model_f.sss2$median.new)
 ##selecting hits
 # x<-row.names(alp_model_f.sss[alp_model_f.sss$Class=="top",])
 # #writeClipboard(x)
@@ -69,7 +69,7 @@ table(alp_model_f.sss2$median.new)
 ##creating model
 
 ##selecting samples for training and testing
-data_for_model<-alp_model_f.sss[,colnames(alp_model_f.sss)!="median.new"]
+data_for_model<-alp_model_f.sss
 #data_for_model<-data_for_model[,colnames(data_for_model)!="PatArDif"]
 #data_for_model<-alp_model_f.sss[,colnames(alp_model_f.sss2)!="median"]
 class_data<-data_for_model[,"Class"]
