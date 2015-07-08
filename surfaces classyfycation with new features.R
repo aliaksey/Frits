@@ -340,8 +340,9 @@ legend(x=0.6,y=0.3,
 
 ## plot alp intensity values base on that parameters
 library(ggplot2)
-ggplot(data_for_model,aes(Texture_Texture_DifferenceVariance_Surface_25_90,
-                          Texture_Texture_InverseDifferenceMoment_Surface_25_90,colour=as.factor(Class)),)+geom_point()+theme_bw()+
+ggplot(data_for_model,aes(Texture_Texture_InfoMeas2_Surface_2_45,
+                          Texture_Texture_Entropy_Surface_25_90,colour=as.factor(Class)),)+geom_point()+theme_bw()+
   scale_color_discrete(name ="Surface Class for \n Alp expression", 
-                       labels=c("Negative","Positive"))+ theme(legend.position = c(.8, .8))
+                       labels=c("Negative","Positive"))+ theme(legend.position = c(.2, .8))
 
+#data_for_model$Texture_Texture_InfoMeas2_Surface_2_45
